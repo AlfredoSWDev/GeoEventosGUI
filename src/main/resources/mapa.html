@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>GeoEventos Mapa</title>
+
+    <!-- Leaflet CSS -->
+    <link
+            rel="stylesheet"
+            href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        #mapa {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Popup personalizado */
+        .popup-titulo {
+            font-size: 14px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 4px;
+        }
+
+        .popup-fila {
+            font-size: 12px;
+            color: #555;
+            margin: 2px 0;
+        }
+
+        .popup-foto {
+            width: 100%;
+            max-width: 200px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-top: 6px;
+        }
+
+        .popup-btn {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 4px 10px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .popup-btn:hover {
+            background: #2980b9;
+        }
+    </style>
+</head>
+<body>
+
+<div id="mapa"></div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+
+    // ── Inicializar mapa centrado en Santiago ──────────────────────────────
+    const mapa = L.map('mapa').setView([-33.4489, -70.6693], 12);
+
+    // ── Capa de tiles OpenStreetMap ────────────────────────────────────────
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19
+    }).addTo(mapa);
+
+    // ── Ícono personalizado para los marcadores ────────────────────────────
+    const iconoEvento = L.icon({
+        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        iconSize:    [25, 41],
+        iconAnchor:  [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize:  [41, 41]
+    });
+
+    // ── Referencia a todos los marcadores activos ──────────────────────────
+    let marcadores = [];
+
+    // ── Cargar eventos desde Java ──────────────────────────────────────────
+    // Java llamará a esta función pasando un array JSON de eventos
+    function cargarEventos(eventosJson) {
+        // Limpiar marcadores anteriores
+        marcadores.forEach(m => mapa.removeLayer(m));
+        marcadores = [];
+
+        const eventos = JSON.parse(eventosJson);
+
+        eventos.forEach(evento => {
+            if (evento.latitud == null || evento.longitud == null) return;
+
+            const marcador = L.marker([evento.latitud, evento.longitud], { icon: iconoEvento });
+
+            // Construir contenido del popup
+            const foto = evento.fotosEvento && evento.fotosEvento.startsWith('http')
+                ? `<img class="popup-foto" src="${evento.fotosEvento}" alt="foto"/>`
+                : '';
+
+            const contenido = `
+                <div class="popup-titulo">${evento.nombreEvento}</div>
+                <div class="popup-fila">📍 ${evento.lugarEvento}</div>
+                <div class="popup-fila">💰 ${evento.valorEvento}</div>
+                <div class="popup-fila">📅 ${evento.vigenciaEvento}</div>
+                ${foto}
+                <button class="popup-btn"
+                    onclick="verDetalle(${evento.eventId})">
+                    Ver detalle
+                </button>
+            `;
+
+            marcador.bindPopup(contenido, { maxWidth: 220 });
+            marcador.addTo(mapa);
+            marcadores.push(marcador);
+        });
+
+        // Ajustar la vista para mostrar todos los marcadores
+        if (marcadores.length > 0) {
+            const grupo = L.featureGroup(marcadores);
+            mapa.fitBounds(grupo.getBounds().pad(0.2));
+        }
+    }
+
+    // ── Click en el mapa → devuelve coordenadas a Java ────────────────────
+    // Java recibirá latitud y longitud para asignarlas al formulario
+    mapa.on('click', function(e) {
+        const lat = e.latlng.lat.toFixed(6);
+        const lng = e.latlng.lng.toFixed(6);
+
+        // Llamada al bridge Java (se configura en MapaPanel.java)
+        if (window.javabridge) {
+            window.javabridge.onMapClick(lat, lng);
+        }
+
+        // Mostrar marcador temporal en el punto clickeado
+        L.popup()
+            .setLatLng(e.latlng)
+            .setContent(`📍 Lat: ${lat}<br>Lng: ${lng}`)
+            .openOn(mapa);
+    });
+
+    // ── Click en "Ver detalle" dentro del popup ────────────────────────────
+    function verDetalle(eventId) {
+        if (window.javabridge) {
+            window.javabridge.onVerDetalle(String(eventId));
+        }
+    }
+
+    // ── Centrar mapa en coordenadas específicas ────────────────────────────
+    function centrarEn(lat, lng, zoom) {
+        mapa.setView([lat, lng], zoom || 15);
+    }
+
+</script>
+</body>
+</html> ✅

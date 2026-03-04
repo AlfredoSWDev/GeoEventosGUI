@@ -1,6 +1,6 @@
 # GeoEventos GUI
 
-Cliente de escritorio para la plataforma **GeoEventos**, desarrollado en Java con Swing. Permite a empresas y establecimientos locales gestionar sus eventos geolocalizados a través de una interfaz gráfica intuitiva.
+Cliente de escritorio para la plataforma **GeoEventos**, desarrollado en Java con Swing. Permite a empresas y establecimientos locales gestionar sus eventos geolocalizados a través de una interfaz gráfica intuitiva con mapa interactivo embebido.
 
 > Este repositorio contiene únicamente el cliente de escritorio. La lógica de negocio y el acceso a datos residen en [GeoEventosAPI](https://github.com/AlfredoSWDev/GeoEventosAPI).
 
@@ -10,21 +10,23 @@ Cliente de escritorio para la plataforma **GeoEventos**, desarrollado en Java co
 
 GeoEventos es una plataforma que permite a empresas locales **publicar, promocionar y gestionar eventos** en un mapa interactivo, de forma similar a Google Maps. El modelo de negocio es **B2B (Business to Business)**: las empresas pagan por publicar sus eventos, mientras que los usuarios finales acceden a la información de forma totalmente gratuita.
 
-El proyecto inicia con un **MVP CRUD** que permite a los clientes gestionar sus eventos en una base de datos, sentando las bases para la versión completa con mapa interactivo.
+El proyecto inicia con un **MVP CRUD** que permite a los clientes gestionar sus eventos en una base de datos, con visualización geolocalizada a través de un mapa OpenStreetMap embebido.
 
 ---
 
 ## Stack Tecnológico
 
-| Tecnología      | Uso |
-|-----------------|-----|
-| Java 21         | Lenguaje principal |
-| Java Swing      | Interfaz gráfica de usuario |
-| SwingWorker     | Tareas asíncronas (subida de imágenes) |
+| Tecnología | Uso |
+|------------|-----|
+| Java 23 | Lenguaje principal |
+| Java Swing | Interfaz gráfica de usuario |
+| JavaFX WebView | Mapa embebido en la ventana Swing |
+| Leaflet + OpenStreetMap | Mapa interactivo (sin API key, 100% gratuito) |
+| SwingWorker | Tareas asíncronas (subida de imágenes) |
 | Java HttpClient | Comunicación con la API REST |
-| Jackson         | Parseo de respuestas JSON |
-| FlatLaf         | Look & Feel moderno para Swing |
-| IntelliJ IDEA   | IDE (usa `.form` para diseño UI) |
+| Jackson | Parseo de respuestas JSON |
+| FlatLaf | Look & Feel moderno para Swing |
+| IntelliJ IDEA | IDE (usa `.form` para diseño UI) |
 
 ---
 
@@ -39,6 +41,12 @@ GeoEventos GUI
       ▼
 GeoEventos API  ──►  PostgreSQL
                 ──►  ImgBB
+
+Mapa embebido:
+Swing JFrame
+    └── JFXPanel (JavaFX)
+            └── WebView
+                    └── mapa.html + Leaflet + OpenStreetMap
 ```
 
 ### Estructura del Proyecto
@@ -61,31 +69,41 @@ src/main/java/com/alfredo/
 │   ├── ImageData.java
 │   └── ImageDetails.java
 └── ui/
-    ├── Principal.java               # Ventana principal (JTable + botones)
+    ├── Principal.java               # Ventana principal (JTable + mapa + botones)
+    ├── MapaPanel.java               # Mapa Leaflet embebido via JavaFX WebView
     ├── ManipularEventos.java        # Formulario Crear / Editar / Ver
     ├── SubirFotos.java              # SwingWorker para subida de imágenes
     ├── AbrirExploradorArchivos.java # Selector de archivos local
     └── DesplegarUI.java             # Utilidad para crear JFrames
+
+src/main/resources/
+    ├── config.properties            # Configuración de la app
+    └── mapa.html                    # HTML con Leaflet para el mapa embebido
 ```
 
 ---
 
-## Funcionalidades (MVP)
+## Funcionalidades
 
 - **Listar eventos** en una tabla con ID, nombre, valor y lugar
 - **Buscar eventos** por nombre o lugar
-- **Crear evento** con nombre, descripción, vigencia, valor, lugar y foto
+- **Crear evento** con nombre, descripción, vigencia, valor, lugar, coordenadas y foto
 - **Modificar evento** cargando sus datos actuales en el formulario
 - **Ver detalle** de un evento en modo solo lectura
 - **Eliminar evento** con confirmación previa
 - **Subir imágenes** de forma asíncrona (sin congelar la UI)
+- **Mapa interactivo** con marcadores geolocalizados por evento
+- **Click en marcador** para ver el detalle del evento directamente desde el mapa
+- **Click en el mapa** para asignar coordenadas al crear o editar un evento
+- **Mostrar/ocultar mapa** con un botón desde la ventana principal
 
 ---
 
 ## Requisitos
 
-- Java 21+
-- [GeoEventosAPI](https://github.com/tu-usuario/GeoEventosAPI) corriendo en `localhost:8080`
+- Java 23+
+- JavaFX 23
+- [GeoEventosAPI](https://github.com/AlfredoSWDev/GeoEventosAPI) corriendo en `localhost:8080`
 
 ---
 
@@ -127,6 +145,22 @@ Principal (windowGainedFocus)
                     └── Llena el JTable
 ```
 
+### Mapa interactivo
+```
+Botón "Ver Mapa"
+    └── MapaPanel.cargarEventos()
+            └── GET /api/eventos
+                    └── JS cargarEventos(json) → pinta marcadores
+
+Click en marcador
+    └── javabridge.onVerDetalle(id)
+            └── ManipularEventos("Evento:", id)
+
+Click en el mapa
+    └── javabridge.onMapClick(lat, lng)
+            └── rellena campos de coordenadas en el formulario
+```
+
 ### Crear / Editar evento
 ```
 Botón Crear/Editar
@@ -147,8 +181,10 @@ Botón Borrar
 
 ## Roadmap
 
-- [ ] Integración con mapa interactivo (Google Maps / OpenStreetMap)
-- [ ] Visualización geolocalizada de eventos
+- [x] Integración con mapa interactivo (Leaflet + OpenStreetMap)
+- [x] Visualización geolocalizada de eventos
+- [x] Click en marcador para ver detalle
+- [x] Click en mapa para asignar coordenadas
 - [ ] Filtros avanzados por categoría, fecha y distancia
 - [ ] Panel de estadísticas para clientes B2B
 - [ ] Despliegue en AWS
@@ -161,3 +197,4 @@ Botón Borrar
 |-------------|-------------|
 | **GeoEventosGUI** | Este repositorio — cliente de escritorio Swing |
 | [GeoEventosAPI](https://github.com/AlfredoSWDev/GeoEventosAPI) | API REST Spring Boot |
+| [GeoEventosAndroid](https://github.com/AlfredoSWDev/GeoEventosAndroid) | Cliente móvil Android |
