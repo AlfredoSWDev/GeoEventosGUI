@@ -1,10 +1,10 @@
-**GeoEventosGUI**
+**GeoEventosDesktop**
 =====
 
 **Introducción**
 =============
 
-GeoEventosGUI es una aplicación cliente basada en Java Swing que permite a los usuarios visualizar, crear, modificar y eliminar eventos. La aplicación se integra con el servicio web GeoEventosAPI para proporcionar una experiencia de usuario completa.
+GeoEventosDesktop es una aplicación cliente basada en Java Swing que permite a los usuarios visualizar, crear, modificar y eliminar eventos. La aplicación se integra con el servicio web GeoEventosAPI para proporcionar una experiencia de usuario completa.
 
 **Características**
 ================
@@ -59,7 +59,7 @@ mvn test
 **Repositorios Relevantes**
 =====================
 
-* **GeoEventosGUI** (este repositorio)
+* **GeoEventosDesktop** (este repositorio)
 * [GeoEventosAPI](https://github.com/AlfredoSWDev/GeoEventosAPI) (servicio web RESTful)
 * [GeoEventosAndroid](https://github.com/AlfredoSWDev/GeoEventosAndroid) (cliente Android)
 
