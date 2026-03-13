@@ -61,7 +61,7 @@ jobs:
             --module-path target/libs \
             --java-options "--add-opens java.base/java.lang=ALL-UNNAMED" \
             --java-options "--add-opens java.base/java.util=ALL-UNNAMED" \
-            --java-options "-XX:+EnableDynamicAgentLoading"
+            --java-options "-XX:+EnableDynamicAgentLoading" \
             --icon src/main/resources/icons/icon.png
 
       - name: Upload RPM artifact
@@ -112,7 +112,7 @@ jobs:
             --module-path target/libs \
             --java-options "--add-opens java.base/java.lang=ALL-UNNAMED" \
             --java-options "--add-opens java.base/java.util=ALL-UNNAMED" \
-            --java-options "-XX:+EnableDynamicAgentLoading"
+            --java-options "-XX:+EnableDynamicAgentLoading" \
             --icon src/main/resources/icons/icon.png
 
       - name: Upload DEB artifact
@@ -169,7 +169,7 @@ jobs:
             --java-options "--add-opens java.base/java.util=ALL-UNNAMED" `
             --java-options "-XX:+EnableDynamicAgentLoading" `
             --win-menu `
-            --win-shortcut
+            --win-shortcut `
             --icon src\main\resources\icons\icon.ico
         shell: pwsh
 
@@ -221,7 +221,7 @@ jobs:
             --module-path target/libs \
             --java-options "--add-opens java.base/java.lang=ALL-UNNAMED" \
             --java-options "--add-opens java.base/java.util=ALL-UNNAMED" \
-            --java-options "-XX:+EnableDynamicAgentLoading"
+            --java-options "-XX:+EnableDynamicAgentLoading" \
             --icon src/main/resources/icons/icon.icns
 
       - name: Upload PKG artifact
