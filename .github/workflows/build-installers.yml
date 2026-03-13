@@ -1,0 +1,183 @@
+name: Build Installers
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+
+  # ── Linux RPM (Fedora / RHEL) ─────────────────────────────────────────────
+  build-rpm:
+    name: Linux RPM
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 23 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '23'
+          distribution: 'temurin'
+
+      - name: Install rpm-build
+        run: sudo apt-get install -y rpm
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Copy libs to jpackage-input
+        run: cp -r target/libs target/jpackage-input/libs
+
+      - name: Generate RPM installer
+        run: |
+          jpackage \
+            --type rpm \
+            --name "GeoEventosDesktop" \
+            --app-version "1.0" \
+            --vendor "Alfredo" \
+            --description "GeoEventos Desktop - Gestión de eventos con geolocalización" \
+            --input target/jpackage-input \
+            --main-jar GeoEventosDesktop.jar \
+            --main-class com.alfredo.Main \
+            --dest target/installer \
+            --module-path target/libs \
+            --java-options "--add-opens java.base/java.lang=ALL-UNNAMED" \
+            --java-options "--add-opens java.base/java.util=ALL-UNNAMED" \
+            --java-options "-XX:+EnableDynamicAgentLoading"
+
+      - name: Upload RPM
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-rpm
+          path: target/installer/*.rpm
+
+  # ── Linux DEB (Ubuntu / Debian) ───────────────────────────────────────────
+  build-deb:
+    name: Linux DEB
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 23 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '23'
+          distribution: 'temurin'
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Copy libs to jpackage-input
+        run: cp -r target/libs target/jpackage-input/libs
+
+      - name: Generate DEB installer
+        run: |
+          jpackage \
+            --type deb \
+            --name "GeoEventosDesktop" \
+            --app-version "1.0" \
+            --vendor "Alfredo" \
+            --description "GeoEventos Desktop - Gestión de eventos con geolocalización" \
+            --input target/jpackage-input \
+            --main-jar GeoEventosDesktop.jar \
+            --main-class com.alfredo.Main \
+            --dest target/installer \
+            --module-path target/libs \
+            --java-options "--add-opens java.base/java.lang=ALL-UNNAMED" \
+            --java-options "--add-opens java.base/java.util=ALL-UNNAMED" \
+            --java-options "-XX:+EnableDynamicAgentLoading"
+
+      - name: Upload DEB
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-deb
+          path: target/installer/*.deb
+
+  # ── Windows EXE ───────────────────────────────────────────────────────────
+  build-windows:
+    name: Windows EXE
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 23 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '23'
+          distribution: 'temurin'
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Copy libs to jpackage-input
+        run: Copy-Item -Recurse target\libs target\jpackage-input\libs
+        shell: pwsh
+
+      - name: Generate EXE installer
+        run: |
+          jpackage `
+            --type exe `
+            --name "GeoEventosDesktop" `
+            --app-version "1.0" `
+            --vendor "Alfredo" `
+            --description "GeoEventos Desktop - Gestión de eventos con geolocalización" `
+            --input target\jpackage-input `
+            --main-jar GeoEventosDesktop.jar `
+            --main-class com.alfredo.Main `
+            --dest target\installer `
+            --module-path target\libs `
+            --java-options "--add-opens java.base/java.lang=ALL-UNNAMED" `
+            --java-options "--add-opens java.base/java.util=ALL-UNNAMED" `
+            --java-options "-XX:+EnableDynamicAgentLoading" `
+            --win-menu `
+            --win-shortcut
+        shell: pwsh
+
+      - name: Upload EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-windows
+          path: target\installer\*.exe
+
+  # ── macOS PKG ─────────────────────────────────────────────────────────────
+  build-macos:
+    name: macOS PKG
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 23 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '23'
+          distribution: 'temurin'
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Copy libs to jpackage-input
+        run: cp -r target/libs target/jpackage-input/libs
+
+      - name: Generate PKG installer
+        run: |
+          jpackage \
+            --type pkg \
+            --name "GeoEventosDesktop" \
+            --app-version "1.0" \
+            --vendor "Alfredo" \
+            --description "GeoEventos Desktop - Gestión de eventos con geolocalización" \
+            --input target/jpackage-input \
+            --main-jar GeoEventosDesktop.jar \
+            --main-class com.alfredo.Main \
+            --dest target/installer \
+            --module-path target/libs \
+            --java-options "--add-opens java.base/java.lang=ALL-UNNAMED" \
+            --java-options "--add-opens java.base/java.util=ALL-UNNAMED" \
+            --java-options "-XX:+EnableDynamicAgentLoading"
+
+      - name: Upload PKG
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-macos
+          path: target/installer/*.pkg
