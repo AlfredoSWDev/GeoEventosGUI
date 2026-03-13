@@ -3,9 +3,9 @@ name: Build Installers
 on:
   push:
     tags:
-      - 'v[0-9]*.*.*-alfa'
-      - 'v[0-9]*.*.*-beta'
-      - 'v[0-9]*.*.*-stable'
+      - 'v[0-9]*.*.*-*-alfa'
+      - 'v[0-9]*.*.*-*-beta'
+      - 'v[0-9]*.*.*-*-stable'
   workflow_dispatch:
 
 permissions:
@@ -241,7 +241,7 @@ jobs:
         id: flags
         run: |
           TAG="${GITHUB_REF_NAME}"
-          if [[ "$TAG" == *"-stable" ]]; then
+          if [[ "$TAG" == *"-stable" ]] && [[ "$TAG" =~ -[0-9]+-stable$ ]]; then
             echo "prerelease=false" >> $GITHUB_OUTPUT
           else
             echo "prerelease=true" >> $GITHUB_OUTPUT
